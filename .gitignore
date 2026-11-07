@@ -1,0 +1,19 @@
+.phase2_packages/
+.venv/
+.venv-*/
+__pycache__/
+.ipynb_checkpoints/
+.pytest_cache/
+*.py[cod]
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+*.log
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+# Local scratch notebook; preserved on disk, not a publication artifact.
+/data/processed/Untitled.ipynb
