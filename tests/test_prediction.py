@@ -23,6 +23,24 @@ def test_prediction_and_schema(artifacts, customer):
     assert flag == (p >= .5)
     assert p == pytest.approx(model.predict_proba(frame)[0, 1])
 
+def test_corrupt_model_rejected_before_loading(tmp_path, monkeypatch):
+    import shutil
+    import src.prediction as prediction
+    model_dir = tmp_path / 'models'
+    model_dir.mkdir()
+    for name in ['model_metadata.json', 'artifact.sha256']:
+        shutil.copy(prediction.ROOT / 'models' / name, model_dir / name)
+    (model_dir / 'best_churn_pipeline.joblib').write_bytes(b'corrupt')
+    monkeypatch.setattr(prediction, 'ROOT', tmp_path)
+    with pytest.raises(ValueError, match='checksum mismatch'):
+        prediction.load_artifacts()
+
+def test_missing_artifact_fails(tmp_path, monkeypatch):
+    import src.prediction as prediction
+    monkeypatch.setattr(prediction, 'ROOT', tmp_path)
+    with pytest.raises(FileNotFoundError):
+        prediction.load_artifacts()
+
 @pytest.mark.parametrize('key,value', [('tenure', -1), ('tenure', 73), ('tenure', 1.5), ('MonthlyCharges', float('inf')), ('TotalCharges', float('nan')), ('MonthlyCharges', '70'), ('gender', 'Unknown'), ('ChurnFlag', 1), ('SeniorCitizen', True), ('MultipleLines', 'No phone service'), ('InternetService', 'No')])
 def test_invalid_inputs(artifacts, customer, key, value):
     customer[key] = value

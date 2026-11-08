@@ -122,8 +122,26 @@ The test workflow runs on pushes and pull requests once you publish the reposito
 
 Dataset contents were verified byte-for-byte against IBM's upstream CSV. See [dataset attribution and checksum](data/README.md) and the [bundled Apache-2.0 license](LICENSES/IBM-Apache-2.0.txt). Raw data and trained results are unchanged; saved notebook outputs now use relative paths.
 
-The proposed code license is in [LICENSE-MIT-DRAFT.txt](LICENSE-MIT-DRAFT.txt). It is **not yet adopted**: confirm the copyright-holder name, remove the draft marker, and rename it to `LICENSE` after review. Third-party dataset terms remain separate.
+No project code license has been adopted. Confirm the copyright-holder name and license before offering the code under MIT terms. Third-party dataset terms remain separate.
 
-`.gitignore` excludes virtual environments, the local XGBoost package directory, caches, logs, `.env` files, and Streamlit secrets. Review staged files manually; do not commit credentials or customer data. Keep the trusted pipeline and metadata together, or document how to regenerate them with Phase 2. No Git repository, remote, commit, push, or deployment was created by this preparation.
+`.gitignore` excludes virtual environments, the local XGBoost package directory, caches, logs, `.env` files, and Streamlit secrets. Review staged files manually; do not commit credentials or customer data. Keep the trusted pipeline and metadata together, or document how to regenerate them with Phase 2. Publishing this repository does not deploy the application.
 
 See [PUBLICATION_CHECKLIST.md](PUBLICATION_CHECKLIST.md) for files to include and final approval items.
+
+## Reproducible installation and operational safeguards
+
+For the exact Windows Python 3.13 dependency set used in the publication check, install `requirements-lock-windows.txt` in a new virtual environment. `requirements.txt` remains the cross-platform entry point; the Windows snapshot includes Windows-specific dependencies and must not be used directly on Linux.
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements-lock-windows.txt
+.\.venv\Scripts\python.exe -m pip check
+.\.venv\Scripts\python.exe -m pytest -q
+.\.venv\Scripts\python.exe -m streamlit run app.py
+```
+
+The saved pipeline is checked against `models/artifact.sha256` before deserialization. This detects accidental corruption, not malicious replacement of both files: accept model artifacts only from trusted sources. Phase 2 regenerates the checksum when saving a new model. Restart Streamlit after replacing an artifact because the pipeline is cached.
+
+`.streamlit/config.toml` binds to localhost, disables telemetry, and enables CORS and XSRF protection. Unexpected load/inference failures are logged server-side without explicitly logging customer profiles; users see a short error message. No customer inputs are persisted by application code.
+
+Public production use still requires a hosting/access-control and TLS plan, operational monitoring, a retention policy, and validation on representative recent customers. Calibration, business-cost threshold selection, and subgroup evaluation remain model limitations. These are not established by passing software tests. No external hosting or deployment is enabled here.

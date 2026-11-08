@@ -1,5 +1,6 @@
 """Run with python -m streamlit run app.py."""
 import streamlit as st
+import logging
 from src.prediction import ADDONS, CATEGORIES, load_artifacts, predict_customer
 
 st.set_page_config(page_title='ChurnLens | Customer retention', page_icon='◉', layout='wide')
@@ -18,6 +19,7 @@ def get_artifacts():
 try:
     model, metadata = get_artifacts()
 except Exception:
+    logging.getLogger(__name__).exception('Model initialization failed')
     st.error('Unable to load the model. Check models/ artifacts and install the versions recorded in model_metadata.json.')
     st.stop()
 
@@ -66,6 +68,7 @@ if st.button('Calculate churn risk', type='primary', use_container_width=True):
     except ValueError as exc:
         st.error(str(exc))
     except Exception:
+        logging.getLogger(__name__).exception('Model inference failed')
         st.error('Prediction failed. Check the saved model and installed package versions.')
     else:
         st.divider()

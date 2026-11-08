@@ -2,6 +2,7 @@
 from pathlib import Path
 import json
 import math
+import hashlib
 import sys
 import importlib.util
 import joblib
@@ -28,7 +29,11 @@ def load_artifacts():
     metadata = json.loads((ROOT / 'models/model_metadata.json').read_text())
     if metadata['selected_model'] != 'XGBoost':
         raise ValueError('The saved model must be XGBoost.')
-    model = joblib.load(ROOT / 'models/best_churn_pipeline.joblib')
+    artifact = ROOT / 'models/best_churn_pipeline.joblib'
+    expected_hash = (ROOT / 'models/artifact.sha256').read_text().strip()
+    if hashlib.sha256(artifact.read_bytes()).hexdigest() != expected_hash:
+        raise ValueError('Model checksum mismatch. Restore the reviewed artifact.')
+    model = joblib.load(artifact)
     if list(model.feature_names_in_) != metadata['feature_columns']:
         raise ValueError('Model and metadata feature schemas differ.')
     if type(model.named_steps['model']).__name__ != 'XGBClassifier':
